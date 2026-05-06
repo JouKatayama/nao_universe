@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>AI Company Lab - サイトデモ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    color: #fff;
+    font-family: 'Noto Sans JP', sans-serif;
+    overflow: hidden;
+    width: 1440px;
+    height: 900px;
+  }
+
+  /* ── Title slide ── */
+  .title-slide {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 40%, rgba(217,171,111,.12) 0%, transparent 60%), #0a0a0f;
+    z-index: 100;
+    opacity: 1;
+    transition: opacity .8s ease;
+  }
+  .title-slide.hidden { opacity: 0; pointer-events: none; }
+  .title-slide h1 {
+    font-size: 56px; font-weight: 900;
+    background: linear-gradient(135deg, #d9ab6f 0%, #f0d4a8 50%, #d9ab6f 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 16px; letter-spacing: -0.02em;
+  }
+  .title-slide p {
+    font-size: 20px; color: rgba(255,255,255,.5);
+    margin-bottom: 8px;
+  }
+  .title-slide .subtitle {
+    font-size: 15px; color: rgba(255,255,255,.3);
+    margin-top: 24px;
+  }
+  .title-slide .start-btn {
+    margin-top: 40px;
+    background: linear-gradient(135deg, #d9ab6f 0%, #f0d4a8 100%);
+    color: #0a0a0f;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.05em;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .title-slide .start-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(217,171,111,.3);
+  }
+
+  /* ── Ending slide ── */
+  .ending-slide {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 40%, rgba(217,171,111,.12) 0%, transparent 60%), #0a0a0f;
+    z-index: 100;
+    opacity: 0; pointer-events: none;
+    transition: opacity .8s ease;
+  }
+  .ending-slide.visible { opacity: 1; }
+  .ending-slide h2 {
+    font-size: 48px; font-weight: 900;
+    background: linear-gradient(135deg, #d9ab6f 0%, #f0d4a8 50%, #d9ab6f 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 20px;
+  }
+  .ending-slide p {
+    font-size: 18px; color: rgba(255,255,255,.5);
+    line-height: 1.8;
+    text-align: center;
+  }
+  .ending-slide .url {
+    margin-top: 32px;
+    font-size: 16px;
+    color: #d9ab6f;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Screenshot container ── */
+  .scene {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity .6s ease;
+  }
+  .scene.active { opacity: 1; }
+
+  .scene img {
+    width: 1200px;
+    height: 750px;
+    object-fit: cover;
+    object-position: top center;
+    border-radius: 12px;
+    box-shadow: 0 0 80px rgba(217,171,111,.08), 0 20px 60px rgba(0,0,0,.5);
+    border: 1px solid rgba(255,255,255,.06);
+  }
+
+  /* ── Narration bar ── */
+  .narration {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(10,10,15,.97) 0%, rgba(10,10,15,.85) 70%, transparent 100%);
+    padding: 32px 60px 28px;
+    z-index: 50;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity .5s ease .3s, transform .5s ease .3s;
+  }
+  .narration.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .narration .label {
+    font-size: 11px;
+    color: #d9ab6f;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-bottom: 8px;
+  }
+  .narration .text {
+    font-size: 18px;
+    color: rgba(255,255,255,.85);
+    line-height: 1.7;
+    max-width: 900px;
+  }
+
+  /* ── Progress bar ── */
+  .progress {
+    position: fixed; top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #d9ab6f, #f0d4a8);
+    z-index: 200;
+    width: 0%;
+    transition: width .3s linear;
+  }
+
+  /* ── Scene counter ── */
+  .counter {
+    position: fixed; top: 20px; right: 32px;
+    font-size: 13px; color: rgba(255,255,255,.3);
+    z-index: 200;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Speaking indicator ── */
+  .speaking-indicator {
+    position: fixed; top: 20px; left: 32px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: rgba(255,255,255,.4);
+    z-index: 200;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .speaking-indicator.active { opacity: 1; }
+  .speaking-indicator .wave {
+    display: flex; align-items: center; gap: 2px; height: 16px;
+  }
+  .speaking-indicator .wave span {
+    display: block; width: 3px; border-radius: 2px;
+    background: #d9ab6f;
+    animation: wave 1s ease-in-out infinite;
+  }
+  .speaking-indicator .wave span:nth-child(1) { height: 6px; animation-delay: 0s; }
+  .speaking-indicator .wave span:nth-child(2) { height: 12px; animation-delay: .15s; }
+  .speaking-indicator .wave span:nth-child(3) { height: 8px; animation-delay: .3s; }
+  .speaking-indicator .wave span:nth-child(4) { height: 14px; animation-delay: .45s; }
+  .speaking-indicator .wave span:nth-child(5) { height: 6px; animation-delay: .6s; }
+  @keyframes wave {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(.4); }
+  }
+
+  /* ── Controls ── */
+  .controls {
+    position: fixed; bottom: 20px; right: 32px;
+    display: flex; gap: 12px;
+    z-index: 200;
+  }
+  .controls button {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.1);
+    color: rgba(255,255,255,.6);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+  }
+  .controls button:hover {
+    background: rgba(255,255,255,.15);
+    color: #fff;
+  }
+  .controls .mute-btn.muted {
+    color: rgba(255,100,100,.6);
+    border-color: rgba(255,100,100,.2);
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="counter" id="counter"></div>
+
+<!-- Speaking indicator -->
+<div class="speaking-indicator" id="speakingIndicator">
+  <div class="wave"><span></span><span></span><span></span><span></span><span></span></div>
+  音声ナレーション再生中
+</div>
+
+<!-- Title Slide -->
+<div class="title-slide" id="titleSlide">
+  <p>NPO法人キャリアキャンパス presents</p>
+  <h1>AI Company Lab</h1>
+  <p>サイトデモンストレーション</p>
+  <button class="start-btn" id="startBtn">音声付きで再生する</button>
+  <div class="subtitle">クリックで開始 ― スペースキーで一時停止</div>
+</div>
+
+<!-- Ending Slide -->
+<div class="ending-slide" id="endingSlide">
+  <h2>AI Company Lab</h2>
+  <p>
+    「AIにできたとしても、人が担うべき仕事は何か。」<br>
+    この問いを、若者と一緒にAIで考え、<br>
+    公共財として編纂し続ける。
+  </p>
+  <div class="url">ai-company-lab.org</div>
+</div>
+
+<!-- Scenes (screenshots + narration) -->
+<div id="scenes"></div>
+
+<!-- Narration overlay -->
+<div class="narration" id="narration">
+  <div class="label" id="narrationLabel"></div>
+  <div class="text" id="narrationText"></div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button onclick="toggleMute()" id="muteBtn" class="mute-btn">🔊 音声ON</button>
+  <button onclick="togglePause()" id="pauseBtn">⏸ 一時停止</button>
+  <button onclick="skipToNext()">次へ →</button>
+</div>
+
+<script>
+const SCENES = [
+  {
+    img: 'screenshots/01-hero.png',
+    label: 'トップページ',
+    text: 'ヒーローセクション。「AIの会社を、AIで考える。」をキャッチコピーに、プロジェクトの理念を一目で伝えます。参加申込と設計書への導線を配置しています。',
+    speech: 'まずはトップページです。「AIの会社を、AIで考える。」というキャッチコピーで、プロジェクトの理念を一目で伝えます。参加申込と設計書への導線をメインに配置しています。',
+  },
+  {
+    img: 'screenshots/02-core-question.png',
+    label: 'コア・クエスチョン',
+    text: '本プロジェクトの核心となる問い ―「AIにできたとしても、人が担うべき仕事は何か。」を大きく提示するセクション。',
+    speech: 'こちらはプロジェクトの核心となる問い。「AIにできたとしても、人が担うべき仕事は何か。」この問いを参加者全員で考えていきます。',
+  },
+  {
+    img: 'screenshots/03-schedule.png',
+    label: '開催スケジュール',
+    text: '直近のワークショップ日程を表示。日付カードで視認性を高め、Zoom開催・参加費などの情報をバッジで表示しています。',
+    speech: '直近のワークショップ日程です。日付カードで視認性を高め、ズーム開催や参加費などの情報もわかりやすく表示しています。',
+  },
+  {
+    img: 'screenshots/04-how-it-works.png',
+    label: 'ワークショップの流れ',
+    text: '参加の4ステップを視覚的に説明。テーマ発表からAIでの議論・発表まで、ワークショップの体験をイメージできるよう設計。',
+    speech: 'ワークショップの流れを4ステップで説明しています。テーマ発表からAIを使った議論、そして発表まで、参加イメージが湧くよう設計しました。',
+  },
+  {
+    img: 'screenshots/05-voices.png',
+    label: '参加者の声',
+    text: '過去の参加者からのフィードバックを紹介。実際の声を掲載することで、参加を検討している方の安心感を醸成します。',
+    speech: '過去の参加者の声です。実際のフィードバックを掲載することで、参加を検討している方に安心感を持っていただけます。',
+  },
+  {
+    img: 'screenshots/06-design-doc-preview.png',
+    label: '設計書プレビュー',
+    text: 'ワークショップの成果物である「AI時代の会社 設計書」の目次を表示。議論の深さと体系性を伝えます。',
+    speech: 'ワークショップの成果物である設計書のプレビューです。目次を一覧表示して、議論の深さと体系性を伝えています。',
+  },
+  {
+    img: 'screenshots/07-activity.png',
+    label: '最新の活動',
+    text: 'ワークショップレポートやニュースを時系列で表示。プロジェクトが活発に動いていることを伝えるセクション。',
+    speech: '最新の活動セクション。ワークショップレポートやニュースを時系列で表示し、プロジェクトが活発に動いていることを伝えます。',
+  },
+  {
+    img: 'screenshots/08-supervisor.png',
+    label: '監修者',
+    text: '監修者のプロフィールを紹介。専門家の監修があることでプロジェクトの信頼性を担保します。',
+    speech: '監修者のプロフィール紹介です。専門家の監修があることで、プロジェクトの信頼性を高めています。',
+  },
+  {
+    img: 'screenshots/09-cta.png',
+    label: 'CTA',
+    text: 'ページ最下部のCTA。「一緒に考えてみませんか？」と呼びかけ、参加申込ページへの導線を設置。',
+    speech: 'ページ最下部のコールトゥアクション。「一緒に考えてみませんか？」と呼びかけ、参加申込への導線を設けています。',
+  },
+  {
+    img: 'screenshots/10-about.png',
+    label: 'About ページ',
+    text: 'プロジェクトの詳細な背景と運営団体（NPO法人キャリアキャンパス）の情報を掲載するページ。',
+    speech: '続いてアバウトページです。プロジェクトの詳しい背景と、運営団体であるNPO法人キャリアキャンパスの情報を掲載しています。',
+  },
+  {
+    img: 'screenshots/11-design-doc.png',
+    label: '設計書ページ',
+    text: '「AI時代の会社 設計書」の全文を閲覧できるページ。MDXで構造化されたコンテンツを美しく表示します。',
+    speech: '設計書ページです。AI時代の会社設計書の全文を閲覧できます。MDXで構造化されたコンテンツを読みやすく表示しています。',
+  },
+  {
+    img: 'screenshots/12-design-doc-scroll.png',
+    label: '設計書（スクロール後）',
+    text: '設計書の本文部分。目次と連動して現在地を表示するTable of Contentsを右側に固定配置。',
+    speech: '設計書をスクロールした状態です。右側に固定されたテーブルオブコンテンツが、現在の読み位置と連動して表示されます。',
+  },
+  {
+    img: 'screenshots/13-reports.png',
+    label: 'レポート一覧',
+    text: '過去のワークショップレポートを一覧表示。各回の議題とキーワードが一目でわかるカードデザイン。',
+    speech: 'レポート一覧ページです。過去のワークショップレポートをカード形式で一覧表示。各回の議題とキーワードがひと目でわかります。',
+  },
+  {
+    img: 'screenshots/14-report-detail.png',
+    label: 'レポート詳細',
+    text: '個別のワークショップレポート。当日の議論内容、参加者の意見、AIの分析結果などを詳細に記載。',
+    speech: '個別のレポート詳細ページ。当日の議論内容や参加者の意見、AIの分析結果などが詳しく読めます。',
+  },
+  {
+    img: 'screenshots/15-voices-page.png',
+    label: '参加者の声ページ',
+    text: '参加者のフィードバックを専用ページで詳しく紹介。属性別に体験談を掲載し、多様な参加者層を示します。',
+    speech: '参加者の声の専用ページです。属性別にフィードバックを掲載し、大学生から社会人まで多様な参加者層を示しています。',
+  },
+  {
+    img: 'screenshots/16-supervisor-page.png',
+    label: '監修者ページ',
+    text: '監修者の経歴・専門分野・メッセージを詳しく紹介するページ。学術的な裏付けを伝えます。',
+    speech: '監修者の詳細ページ。経歴や専門分野、メッセージを詳しく紹介し、プロジェクトの学術的な裏付けを伝えます。',
+  },
+  {
+    img: 'screenshots/17-join.png',
+    label: '参加申込ページ',
+    text: '参加申込ページ。参加の流れ、日程選択、費用などの情報を整理して表示。下部にフォームを配置。',
+    speech: '参加申込ページです。参加の流れや日程、費用情報をわかりやすく整理し、下部に申込フォームを配置しています。',
+  },
+  {
+    img: 'screenshots/18-join-form.png',
+    label: '申込フォーム',
+    text: 'Web上で直接申込ができるフォーム。名前・メールアドレス・属性・希望日程を入力。',
+    speech: 'こちらが申込フォームです。名前、メールアドレス、属性、希望日程をウェブ上で直接入力して送信できます。外部サービスを使わないネイティブフォームです。',
+  },
+  {
+    img: 'screenshots/19-contact.png',
+    label: 'お問い合わせ',
+    text: 'お問い合わせのハブページ。協賛・提携・取材・その他の4カテゴリに分けて適切な窓口に誘導。',
+    speech: 'お問い合わせのハブページ。協賛、提携、取材、その他の4つのカテゴリに分けて、適切な窓口へ誘導しています。',
+  },
+  {
+    img: 'screenshots/20-contact-sponsor.png',
+    label: '協賛お問い合わせ',
+    text: '協賛に関するお問い合わせフォーム。組織名・担当者名・電話番号などの入力フィールドを用意。',
+    speech: '協賛に関するお問い合わせフォームです。組織名、ご担当者名、電話番号など、必要な情報を入力できるようにしています。',
+  },
+  {
+    img: 'screenshots/21-partners.png',
+    label: 'パートナーページ',
+    text: '協賛企業・提携団体を紹介するページ。プロジェクトを支えるネットワークの広がりを示します。',
+    speech: 'パートナーページ。協賛企業や提携団体を紹介し、プロジェクトを支えるネットワークの広がりを示しています。',
+  },
+  {
+    img: 'screenshots/22-media.png',
+    label: 'メディア掲載',
+    text: 'メディア掲載実績や取材情報をまとめたページ。プレスキットのダウンロード導線も配置。',
+    speech: '最後はメディア掲載ページ。掲載実績や取材情報をまとめ、プレスキットのダウンロード導線も配置しています。以上がAIカンパニーラボのサイトデモでした。',
+  },
+];
+
+// ── DOM elements ──
+const scenesContainer = document.getElementById('scenes');
+const narrationEl = document.getElementById('narration');
+const narrationLabel = document.getElementById('narrationLabel');
+const narrationText = document.getElementById('narrationText');
+const progressEl = document.getElementById('progress');
+const counterEl = document.getElementById('counter');
+const titleSlide = document.getElementById('titleSlide');
+const endingSlide = document.getElementById('endingSlide');
+const pauseBtn = document.getElementById('pauseBtn');
+const muteBtn = document.getElementById('muteBtn');
+const startBtn = document.getElementById('startBtn');
+const speakingIndicator = document.getElementById('speakingIndicator');
+
+// Pre-create scene elements
+SCENES.forEach((scene, i) => {
+  const div = document.createElement('div');
+  div.className = 'scene';
+  div.id = `scene-${i}`;
+  div.innerHTML = `<img src="${scene.img}" alt="${scene.label}">`;
+  scenesContainer.appendChild(div);
+});
+
+// ── State ──
+let currentScene = -1;
+let paused = false;
+let muted = false;
+let timer = null;
+let speechStarted = false;
+const TITLE_DURATION = 4000;
+const totalScenes = SCENES.length;
+
+// ── Speech Synthesis ──
+const synth = window.speechSynthesis;
+let jaVoice = null;
+
+function loadVoices() {
+  const voices = synth.getVoices();
+  console.log('All voices:', voices.map(v => `${v.name} [${v.lang}]`).join(', '));
+
+  const jaVoices = voices.filter(v => v.lang === 'ja-JP' || v.lang.startsWith('ja'));
+  console.log('Japanese voices:', jaVoices.map(v => v.name));
+
+  // Prefer Neural/Online voices (Edge) for smoother, more natural speech
+  const preferred = ['Nanami Online', 'Nanami', 'Sayaka Online', 'Sayaka', 'Ayumi Online', 'Ayumi', 'Haruka'];
+  for (const name of preferred) {
+    const found = jaVoices.find(v => v.name.includes(name));
+    if (found) { jaVoice = found; break; }
+  }
+  if (!jaVoice) jaVoice = jaVoices[0] || null;
+
+  if (jaVoice) console.log('Selected voice:', jaVoice.name, jaVoice.lang);
+  else console.warn('No Japanese voice found');
+}
+
+if (synth.onvoiceschanged !== undefined) {
+  synth.onvoiceschanged = loadVoices;
+}
+loadVoices();
+
+function speak(text) {
+  return new Promise((resolve) => {
+    synth.cancel();
+    speakingIndicator.classList.remove('active');
+
+    if (muted || !text) {
+      resolve();
+      return;
+    }
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ja-JP';
+    utter.rate = 0.95;
+    utter.pitch = 1.1;
+    utter.volume = 1.0;
+    if (jaVoice) utter.voice = jaVoice;
+
+    utter.onstart = () => {
+      speakingIndicator.classList.add('active');
+    };
+    utter.onend = () => {
+      speakingIndicator.classList.remove('active');
+      resolve();
+    };
+    utter.onerror = (e) => {
+      speakingIndicator.classList.remove('active');
+      console.warn('Speech error:', e.error);
+      resolve();
+    };
+
+    synth.speak(utter);
+  });
+}
+
+function stopSpeech() {
+  synth.cancel();
+  speakingIndicator.classList.remove('active');
+}
+
+// ── Scene management ──
+async function showScene(index) {
+  clearTimeout(timer);
+  stopSpeech();
+
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  narrationEl.classList.remove('visible');
+
+  if (index === -1) {
+    titleSlide.classList.remove('hidden');
+    endingSlide.classList.remove('visible');
+    counterEl.textContent = '';
+    progressEl.style.width = '0%';
+    currentScene = -1;
+    return;
+  }
+
+  if (index >= totalScenes) {
+    endingSlide.classList.add('visible');
+    titleSlide.classList.add('hidden');
+    narrationEl.classList.remove('visible');
+    counterEl.textContent = '';
+    progressEl.style.width = '100%';
+    currentScene = totalScenes;
+
+    if (!muted) {
+      await speak('ご覧いただきありがとうございました。');
+    }
+    return;
+  }
+
+  titleSlide.classList.add('hidden');
+  endingSlide.classList.remove('visible');
+  currentScene = index;
+
+  const scene = SCENES[index];
+  const sceneEl = document.getElementById(`scene-${index}`);
+  sceneEl.classList.add('active');
+
+  setTimeout(() => {
+    narrationLabel.textContent = scene.label;
+    narrationText.textContent = scene.text;
+    narrationEl.classList.add('visible');
+  }, 200);
+
+  counterEl.textContent = `${index + 1} / ${totalScenes}`;
+  progressEl.style.width = `${((index + 1) / totalScenes) * 100}%`;
+
+  const speechText = scene.speech || scene.text;
+
+  if (muted) {
+    const fallbackDuration = Math.max(4000, speechText.length * 120);
+    scheduleNext(fallbackDuration);
+  } else {
+    await new Promise(r => setTimeout(r, 600));
+
+    if (currentScene !== index) return;
+
+    await speak(speechText);
+
+    if (currentScene !== index) return;
+
+    if (!paused) {
+      timer = setTimeout(() => {
+        showScene(currentScene + 1);
+      }, 1500);
+    }
+  }
+}
+
+function scheduleNext(duration) {
+  clearTimeout(timer);
+  if (!paused) {
+    timer = setTimeout(() => {
+      showScene(currentScene + 1);
+    }, duration);
+  }
+}
+
+// ── Controls ──
+function togglePause() {
+  paused = !paused;
+  pauseBtn.textContent = paused ? '▶ 再生' : '⏸ 一時停止';
+  if (paused) {
+    clearTimeout(timer);
+    if (synth.speaking) synth.pause();
+  } else {
+    if (synth.paused) {
+      synth.resume();
+    } else if (currentScene >= 0 && currentScene < totalScenes) {
+      showScene(currentScene);
+    }
+  }
+}
+
+function toggleMute() {
+  muted = !muted;
+  muteBtn.textContent = muted ? '🔇 音声OFF' : '🔊 音声ON';
+  muteBtn.classList.toggle('muted', muted);
+  if (muted) {
+    stopSpeech();
+  }
+}
+
+function skipToNext() {
+  if (currentScene < totalScenes) {
+    showScene(currentScene + 1);
+  }
+}
+
+// ── Start button (user gesture required for Speech API) ──
+startBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  speechStarted = true;
+
+  const warmup = new SpeechSynthesisUtterance('');
+  warmup.lang = 'ja-JP';
+  warmup.volume = 0;
+  synth.speak(warmup);
+
+  speak('AIカンパニーラボ、サイトデモンストレーションを開始します。').then(() => {
+    if (!paused) {
+      timer = setTimeout(() => showScene(0), 800);
+    }
+  });
+
+  titleSlide.classList.add('hidden');
+});
+
+// Keyboard controls
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ' || e.key === 'Space') {
+    e.preventDefault();
+    if (!speechStarted) {
+      startBtn.click();
+      return;
+    }
+    togglePause();
+  } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
+    if (!speechStarted) { startBtn.click(); return; }
+    skipToNext();
+  } else if (e.key === 'ArrowLeft') {
+    if (currentScene > 0) showScene(currentScene - 1);
+    else if (currentScene === 0) showScene(-1);
+  } else if (e.key === 'm' || e.key === 'M') {
+    toggleMute();
+  }
+});
+
+// Show title slide initially (no auto-start — wait for user click)
+showScene(-1);
+</script>
+</body>
+</html>
