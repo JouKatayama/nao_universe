@@ -1,0 +1,50 @@
+[
+  {
+    "id": "voice-001",
+    "quote": "AI時代に何を伸ばすべきか、初めて自分の言葉で考えられた気がします。これまでは漠然とした不安だけでした。",
+    "attribute": "大学2年生・経済学部",
+    "workshopNumber": "0",
+    "consentDate": "2026-05-17",
+    "publicAllowed": true
+  },
+  {
+    "id": "voice-002",
+    "quote": "「違和感を言語化する力」という言葉に出会えたのが大きかった。これから自分が伸ばしたい力です。",
+    "attribute": "26歳・銀行勤務",
+    "workshopNumber": "0",
+    "consentDate": "2026-05-17",
+    "publicAllowed": true
+  },
+  {
+    "id": "voice-003",
+    "quote": "AIを使う側になる、という感覚を初めて持てました。受け身でAIに振り回されるのではなく、自分が選ぶ側だと。",
+    "attribute": "大学院M2・情報科学",
+    "workshopNumber": "0",
+    "consentDate": "2026-05-17",
+    "publicAllowed": true
+  },
+  {
+    "id": "voice-004",
+    "quote": "教師の仕事をAIに任せていい部分と、絶対に渡したくない部分が、自分の中で明確になりました。",
+    "attribute": "大学3年生・教育学部",
+    "workshopNumber": "0",
+    "consentDate": "2026-05-17",
+    "publicAllowed": true
+  },
+  {
+    "id": "voice-005",
+    "quote": "他の参加者の話を聞いて、AIに対する不安は私だけじゃないと知れた。それだけでも来た甲斐がありました。",
+    "attribute": "30歳・フリーランスデザイナー",
+    "workshopNumber": "0",
+    "consentDate": "2026-05-17",
+    "publicAllowed": true
+  },
+  {
+    "id": "voice-006",
+    "quote": "「AIにできたとしても、人が担うべき仕事」という問いの立て方が、これまでの議論と全く違いました。視点が変わった。",
+    "attribute": "27歳・地方公務員",
+    "workshopNumber": "0",
+    "consentDate": "2026-05-17",
+    "publicAllowed": true
+  }
+]

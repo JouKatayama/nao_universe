@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Company Lab - Site Demo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0a0a;
+    color: #fff;
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    user-select: none;
+  }
+
+  /* ── Slideshow ── */
+  #slideshow {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity;
+  }
+
+  .slide.active {
+    opacity: 1;
+  }
+
+  .slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform-origin: center center;
+  }
+
+  .slide.active img {
+    animation: kenburns 14s ease-out forwards;
+  }
+
+  @keyframes kenburns {
+    from { transform: scale(1); }
+    to { transform: scale(1.08); }
+  }
+
+  /* ── Overlay gradient ── */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgba(10,10,10,0) 0%,
+      rgba(10,10,10,0) 50%,
+      rgba(10,10,10,0.7) 75%,
+      rgba(10,10,10,0.95) 100%
+    );
+  }
+
+  /* ── Bottom bar ── */
+  #bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 0 40px 40px;
+  }
+
+  /* ── Caption ── */
+  #caption-area {
+    margin-bottom: 28px;
+  }
+
+  #scene-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #d4a574;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  #caption {
+    font-size: 20px;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.92);
+    font-weight: 400;
+    max-width: 700px;
+    min-height: 60px;
+    transition: opacity 0.5s;
+  }
+
+  #caption.fading {
+    opacity: 0;
+  }
+
+  /* ── Progress bar ── */
+  #progress-container {
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  #progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #d4a574, #e8c39a);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s linear;
+  }
+
+  /* ── Controls ── */
+  #controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .ctrl-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+
+  .ctrl-btn:hover {
+    background: rgba(212,165,116,0.15);
+    border-color: rgba(212,165,116,0.3);
+  }
+
+  .ctrl-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  #scene-counter {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    font-variant-numeric: tabular-nums;
+    margin-left: 4px;
+  }
+
+  #time-display {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+  }
+
+  /* ── Scene dots ── */
+  #scene-dots {
+    display: flex;
+    gap: 6px;
+    margin-left: 12px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .dot.active {
+    background: #d4a574;
+    box-shadow: 0 0 8px rgba(212,165,116,0.4);
+  }
+
+  .dot.done {
+    background: rgba(212,165,116,0.4);
+  }
+
+  .dot:hover {
+    background: rgba(212,165,116,0.6);
+  }
+
+  /* ── Start screen ── */
+  #start-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s;
+  }
+
+  #start-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #start-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #d4a574, #a8804f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 900;
+    color: #0a0a0a;
+    letter-spacing: -0.05em;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(212,165,116,0.3);
+  }
+
+  #start-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  #start-subtitle {
+    font-size: 15px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 40px;
+  }
+
+  #start-btn {
+    background: linear-gradient(135deg, #d4a574, #e8c39a);
+    color: #0a0a0a;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(212,165,116,0.3);
+  }
+
+  #start-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(212,165,116,0.4);
+  }
+
+  #voice-note {
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    margin-top: 16px;
+  }
+
+  /* ── Narration indicator ── */
+  #narration-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 16px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  #narration-indicator.speaking {
+    opacity: 1;
+  }
+
+  .sound-bar {
+    width: 3px;
+    height: 14px;
+    background: #d4a574;
+    border-radius: 2px;
+    animation: soundbar 0.8s ease-in-out infinite alternate;
+  }
+
+  .sound-bar:nth-child(1) { animation-delay: 0s; height: 8px; }
+  .sound-bar:nth-child(2) { animation-delay: 0.15s; height: 14px; }
+  .sound-bar:nth-child(3) { animation-delay: 0.3s; height: 10px; }
+  .sound-bar:nth-child(4) { animation-delay: 0.45s; height: 6px; }
+
+  @keyframes soundbar {
+    from { transform: scaleY(0.4); }
+    to { transform: scaleY(1); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    #bottom-bar { padding: 0 20px 24px; }
+    #caption { font-size: 16px; }
+    #scene-dots { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Start Screen -->
+<div id="start-screen">
+  <div id="start-logo">AI</div>
+  <div id="start-title">AI Company Lab</div>
+  <div id="start-subtitle">Site Demo Presentation</div>
+  <button id="start-btn" onclick="startPresentation()">
+    &#9655; プレゼンテーションを開始
+  </button>
+  <div id="voice-note">* ブラウザの音声合成を使用してナレーションを再生します</div>
+</div>
+
+<!-- Slides -->
+<div id="slideshow"></div>
+<div id="overlay"></div>
+
+<!-- Bottom Bar -->
+<div id="bottom-bar">
+  <div id="caption-area">
+    <div id="scene-label"></div>
+    <div id="caption"></div>
+  </div>
+  <div id="progress-container" onclick="onProgressClick(event)">
+    <div id="progress-bar"></div>
+  </div>
+  <div id="controls">
+    <button class="ctrl-btn" onclick="prevScene()" title="前へ">
+      <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    </button>
+    <button class="ctrl-btn" id="play-btn" onclick="togglePlay()" title="再生/一時停止">
+      <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <svg id="icon-pause" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+    </button>
+    <button class="ctrl-btn" onclick="nextScene()" title="次へ">
+      <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+    </button>
+    <span id="scene-counter">1 / 11</span>
+    <div id="scene-dots"></div>
+    <div id="narration-indicator">
+      <div class="sound-bar"></div>
+      <div class="sound-bar"></div>
+      <div class="sound-bar"></div>
+      <div class="sound-bar"></div>
+    </div>
+    <span id="time-display">0:00 / 0:00</span>
+  </div>
+</div>
+
+<script>
+const SCENES = [
+  {
+    image: "slides/scene01.png",
+    label: "Top Page - Hero",
+    caption: "「AIの会社を、AIで考える。」プロジェクトのサイトへようこそ。",
+    narration: "AIの会社を、AIで考える。プロジェクトのウェブサイトをご紹介します。トップページでは、ヒーロー画像とともにプロジェクトの概要が表示されます。"
+  },
+  {
+    image: "slides/scene02.png",
+    label: "Top Page - Core Question",
+    caption: "中心の問い：AIにできたとしても、人が担うべき仕事は何か。",
+    narration: "サイトの中心にある問い。AIにできるかどうかではなく、AIにできたとしても、人が担うべき仕事は何か。この問いがプロジェクト全体を貫いています。"
+  },
+  {
+    image: "slides/scene03.png",
+    label: "Top Page - How It Works",
+    caption: "ワークショップで議論し、設計書にまとめ、オープンに公開する仕組み。",
+    narration: "プロジェクトの仕組みセクション。ワークショップで議論し、設計書にまとめ、オープンに公開するという流れを、写真付きで紹介しています。"
+  },
+  {
+    image: "slides/scene04.png",
+    label: "About Page",
+    caption: "プロジェクトの本質と思想を、写真やイラストを交えて紹介。",
+    narration: "アバウトページです。プロジェクトの本質と思想を、写真やイラストを交えてわかりやすく説明しています。"
+  },
+  {
+    image: "slides/scene05.png",
+    label: "About - Deliverables",
+    caption: "中核成果物：設計書・白書・コミュニティの3つを制作。",
+    narration: "中核成果物として、設計書、白書、コミュニティの3つを制作。AI抽象画を背景にした引用セクションが印象的です。"
+  },
+  {
+    image: "slides/scene06.png",
+    label: "Join Page",
+    caption: "4ステップの申込フロー。知識や経験は不問です。",
+    narration: "参加申込ページ。4ステップのフロー、イベント日程カード、申込フォームがまとまっています。知識や経験は不問です。"
+  },
+  {
+    image: "slides/scene07.png",
+    label: "Design Document",
+    caption: "AI企業の理想像を定義する設計書を、バージョン管理しながら公開。",
+    narration: "設計書ページでは、AI企業の理想像を定義する設計書をバージョン管理しながら公開。目次付きで読みやすい構成です。"
+  },
+  {
+    image: "slides/scene08.png",
+    label: "Voices",
+    caption: "ワークショップ参加者のリアルな感想をカード形式で掲載。",
+    narration: "参加者の声ページ。ワークショップ参加者のリアルな感想を、アバター付きのカード形式で掲載しています。"
+  },
+  {
+    image: "slides/scene09.png",
+    label: "Contact",
+    caption: "4カテゴリのお問い合わせ先をアイコン付きカードで直感的に選択。",
+    narration: "お問い合わせページ。企業協賛、大学連携、メディア取材、その他の4カテゴリを、アイコン付きカードで直感的に選べます。"
+  },
+  {
+    image: "slides/scene10.png",
+    label: "Supervisor",
+    caption: "監修者のプロフィールと経歴を写真付きヘッダーとともに紹介。",
+    narration: "監修者ページ。プロフィールと経歴を、写真付きのヘッダーとともに紹介しています。"
+  },
+  {
+    image: "slides/scene11.png",
+    label: "404 Page",
+    caption: "エラーページにもアニメーション付きのデザインを実装。",
+    narration: "404ページにもアニメーション付きのデザインを施しました。以上が、サイト全体のご紹介です。ありがとうございました。"
+  }
+];
+
+let currentScene = 0;
+let isPlaying = false;
+let sceneTimer = null;
+let startTime = 0;
+let elapsedTime = 0;
+let timerInterval = null;
+
+const totalEstDuration = SCENES.length * 12;
+
+// ── Init ──
+function init() {
+  const slideshow = document.getElementById("slideshow");
+  const dotsContainer = document.getElementById("scene-dots");
+
+  SCENES.forEach((scene, i) => {
+    const div = document.createElement("div");
+    div.className = "slide" + (i === 0 ? " active" : "");
+    div.innerHTML = `<img src="${scene.image}" alt="${scene.label}" />`;
+    slideshow.appendChild(div);
+
+    const dot = document.createElement("div");
+    dot.className = "dot" + (i === 0 ? " active" : "");
+    dot.onclick = () => goToScene(i);
+    dotsContainer.appendChild(dot);
+  });
+
+  updateUI();
+}
+
+// ── Start ──
+function startPresentation() {
+  document.getElementById("start-screen").classList.add("hidden");
+  setTimeout(() => {
+    isPlaying = true;
+    startTime = Date.now();
+    timerInterval = setInterval(updateTime, 500);
+    updatePlayIcon();
+    playScene(0);
+  }, 500);
+}
+
+// ── Scene playback ──
+function playScene(index) {
+  clearTimeout(sceneTimer);
+  speechSynthesis.cancel();
+
+  currentScene = index;
+  updateUI();
+
+  const scene = SCENES[index];
+  const captionEl = document.getElementById("caption");
+  captionEl.classList.add("fading");
+
+  setTimeout(() => {
+    captionEl.textContent = scene.caption;
+    captionEl.classList.remove("fading");
+  }, 300);
+
+  // Speak narration
+  const utter = new SpeechSynthesisUtterance(scene.narration);
+  utter.lang = "ja-JP";
+  utter.rate = 0.95;
+  utter.pitch = 1.05;
+
+  // Try to pick the best Japanese voice
+  const voices = speechSynthesis.getVoices();
+  const jpVoices = voices.filter(v => v.lang.startsWith("ja"));
+
+  // Prefer online/premium voices
+  const preferred = jpVoices.find(v =>
+    v.name.includes("Google") || v.name.includes("Nanami") ||
+    v.name.includes("Premium") || v.name.includes("Enhanced") ||
+    v.name.includes("Natural") || v.name.includes("Online")
+  );
+  const fallback = jpVoices.find(v => v.name.includes("Haruka") || v.name.includes("Ayumi"));
+
+  if (preferred) utter.voice = preferred;
+  else if (fallback) utter.voice = fallback;
+  else if (jpVoices.length > 0) utter.voice = jpVoices[0];
+
+  const indicator = document.getElementById("narration-indicator");
+
+  utter.onstart = () => indicator.classList.add("speaking");
+  utter.onend = () => {
+    indicator.classList.remove("speaking");
+    if (isPlaying && currentScene < SCENES.length - 1) {
+      sceneTimer = setTimeout(() => {
+        nextScene();
+      }, 1500);
+    } else if (currentScene >= SCENES.length - 1) {
+      isPlaying = false;
+      updatePlayIcon();
+      clearInterval(timerInterval);
+    }
+  };
+
+  speechSynthesis.speak(utter);
+}
+
+// ── Navigation ──
+function nextScene() {
+  if (currentScene < SCENES.length - 1) {
+    playScene(currentScene + 1);
+  }
+}
+
+function prevScene() {
+  if (currentScene > 0) {
+    playScene(currentScene - 1);
+  }
+}
+
+function goToScene(index) {
+  if (!isPlaying) {
+    isPlaying = true;
+    if (!startTime) {
+      startTime = Date.now();
+      timerInterval = setInterval(updateTime, 500);
+    }
+    updatePlayIcon();
+  }
+  playScene(index);
+}
+
+function togglePlay() {
+  if (isPlaying) {
+    isPlaying = false;
+    clearTimeout(sceneTimer);
+    speechSynthesis.cancel();
+    document.getElementById("narration-indicator").classList.remove("speaking");
+    clearInterval(timerInterval);
+  } else {
+    isPlaying = true;
+    if (!startTime) startTime = Date.now();
+    timerInterval = setInterval(updateTime, 500);
+    playScene(currentScene);
+  }
+  updatePlayIcon();
+}
+
+function onProgressClick(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const targetScene = Math.floor(pct * SCENES.length);
+  goToScene(Math.max(0, Math.min(SCENES.length - 1, targetScene)));
+}
+
+// ── UI Updates ──
+function updateUI() {
+  // Slides
+  document.querySelectorAll(".slide").forEach((el, i) => {
+    el.classList.toggle("active", i === currentScene);
+    // Reset animation
+    if (i === currentScene) {
+      const img = el.querySelector("img");
+      img.style.animation = "none";
+      img.offsetHeight; // reflow
+      img.style.animation = "";
+    }
+  });
+
+  // Scene label
+  document.getElementById("scene-label").textContent = SCENES[currentScene].label;
+
+  // Counter
+  document.getElementById("scene-counter").textContent =
+    `${currentScene + 1} / ${SCENES.length}`;
+
+  // Progress
+  const pct = ((currentScene + 1) / SCENES.length) * 100;
+  document.getElementById("progress-bar").style.width = pct + "%";
+
+  // Dots
+  document.querySelectorAll(".dot").forEach((dot, i) => {
+    dot.className = "dot";
+    if (i === currentScene) dot.classList.add("active");
+    else if (i < currentScene) dot.classList.add("done");
+  });
+}
+
+function updatePlayIcon() {
+  document.getElementById("icon-play").style.display = isPlaying ? "none" : "block";
+  document.getElementById("icon-pause").style.display = isPlaying ? "block" : "none";
+}
+
+function updateTime() {
+  if (!startTime) return;
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const estTotal = Math.max(elapsed, totalEstDuration);
+  document.getElementById("time-display").textContent =
+    `${formatTime(elapsed)} / ${formatTime(estTotal)}`;
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+// ── Keyboard ──
+document.addEventListener("keydown", (e) => {
+  if (document.getElementById("start-screen").classList.contains("hidden")) {
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); nextScene(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); prevScene(); }
+    else if (e.key === "p" || e.key === "k") togglePlay();
+  } else if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    startPresentation();
+  }
+});
+
+// Load voices (some browsers load async)
+speechSynthesis.onvoiceschanged = () => {};
+speechSynthesis.getVoices();
+
+init();
+</script>
+</body>
+</html>

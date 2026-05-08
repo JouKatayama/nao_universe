@@ -1,0 +1,13 @@
+{
+  "title": "第1回ワークショップ",
+  "dates": [
+    { "date": "2026-06-08", "dayOfWeek": "月", "time": "14:00〜15:30" },
+    { "date": "2026-06-12", "dayOfWeek": "金", "time": "14:00〜15:30" },
+    { "date": "2026-06-17", "dayOfWeek": "水", "time": "14:00〜15:30" }
+  ],
+  "format": "online",
+  "platform": "Zoom",
+  "fee": "学生無料・社会人1,000円",
+  "capacity": 16,
+  "formUrl": ""
+}
